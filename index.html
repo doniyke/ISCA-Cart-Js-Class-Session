@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Shopping Cart Project</title>
+	<style>
+		.flex{
+			display: flex;
+			width: 100%;
+			justify-content: space-around;
+		}
+		.boxed{
+			border: 1px solid gold;
+			margin-bottom: 10px
+		}
+		.cart-item{
+			border: 1px solid green;
+			margin-bottom: 10px
+		}
+	</style>
+</head>
+<body>
+	<div class="flex">
+		<div>
+			<h1>Products</h1>
+			<div class="boxed">
+				<h3>Tecno Spark 2</h3>
+				<h4>Price : #38,000</h4>
+				<button onclick="addItemToCart('Tecno Spark 2', 38000, 1)">Add to cart</button>
+			</div>
+			<div class="boxed">
+				<h3>Tecno Spark 3</h3>
+				<h4>Price : #40,000</h4>
+				<button onclick="addItemToCart('Tecno Spark 3', 40000, 2)">Add to cart</button>
+			</div>
+			<div class="boxed">
+				<h3>Tecno Spark 4</h3>
+				<h4>Price : #50,000</h4>
+				<button onclick="addItemToCart('Tecno Spark 4', 50000, 3)">Add to cart</button>
+			</div>
+		</div>
+		<div>
+			<h1>Items In Cart - <span id="numberOfItems">0</span></h1>
+			<div id="showCart">
+				
+			</div>
+			<div>Total - <span id="showTotal">0</span></div>
+			<div>
+				<button onclick="payWithPaystack()">Pay Now</button>
+			</div>
+		</div>
+	</div>
+
+
+	<script src="https://js.paystack.co/v1/inline.js"></script>
+	<script>
+
+		function getCartItems() {
+			let cartData = localStorage.getItem("cartData");
+			if (cartData == null) {
+				return cartData = [];
+			}else {
+				return cartData = JSON.parse(cartData)
+			}
+		}
+		
+		function addItemToCart(name, price, id){
+			displayCart()
+			let productName = name;
+			let productPrice = price;
+			let productId = id;
+
+			let cartItem = {
+				"productName" : productName,
+				"productPrice" : productPrice,
+				"productId" : productId,
+				"quantity" : 1
+
+			}
+			let cartData = getCartItems();
+			
+			const checkSingleItem = cartData.some(item => item.productId== productId);
+			if (!checkSingleItem) {
+				cartData.push(cartItem);
+				localStorage.setItem("cartData",JSON.stringify(cartData));
+				getCartItems();
+				displayCart()
+
+			}else{
+				for(let item in cartData){
+					if (cartData[item].productId == productId) {
+						cartData[item].quantity = cartData[item].quantity + 1;
+						break;
+					}
+				}
+				localStorage.setItem("cartData",JSON.stringify(cartData));
+				displayCart();
+
+			}
+		}
+
+		function displayCart(){
+			document.getElementById('showCart').innerHTML = '';
+			let cartData = getCartItems();
+			let cartDiv = document.getElementById('showCart')
+			let total=0;
+			let itemsInCart = 0;
+			for(let item in cartData){
+				let singleItem = document.createElement('div');
+				let productId = cartData[item].productId;
+				singleItem.innerHTML = 
+				`<div class="cart-item">
+					<h5>Product Name : ${cartData[item].productName}</h5>
+					<h5>Product Price : ${cartData[item].productPrice}</h5>
+					<h5>Quantity : ${cartData[item].quantity}</h5>
+					<button onclick='removeItem(${productId})'>Remove Item</button>
+				</div>`;
+				total = total + (cartData[item].productPrice * cartData[item].quantity);
+				itemsInCart = itemsInCart + 1;
+				document.getElementById('numberOfItems').innerHTML =itemsInCart;
+				cartDiv.appendChild(singleItem);
+				document.getElementById('showTotal').innerHTML = total
+			}
+		}
+		function removeItem(id){
+			let cartData = getCartItems();
+			for(let item in cartData){
+				if (cartData[item].productId == id) {
+					if (confirm("Do you want to delete this item?")) {
+						cartData.splice(item, 1);
+						alert("Product removed successfully")
+					}
+				}
+				localStorage.setItem("cartData", JSON.stringify(cartData));
+				displayCart();
+			}
+		}
+
+		function payWithPaystack(){
+
+		    var handler = PaystackPop.setup({
+		      key: 'pk_test_0e261ceb65aa5706122cac7662eea3efb3cc910e',
+		      email: 'iykedavis69@gmail.com',
+		      amount: 10000 * 100,
+		      currency: "NGN",
+		      ref: ''+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
+		      metadata: {
+		         custom_fields: [
+		            {
+		                display_name: "Mobile Number",
+		                variable_name: "mobile_number",
+		                value: "+2348012345678"
+		            }
+		         ]
+		      },
+		      callback: function(response){
+		      	console.log(response)
+		          alert('success. transaction ref is ' + response.reference);
+		      },
+		      onClose: function(){
+		          alert('window closed');
+		      }
+		    });
+		    handler.openIframe();
+		  }
+
+
+		displayCart();
+	</script>
+</body>
+</html>
